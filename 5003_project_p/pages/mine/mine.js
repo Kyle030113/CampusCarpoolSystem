@@ -1,6 +1,4 @@
 // pages/mine/mine.js
-// "我的" 页面 - quitJoin updated to accept local-only leave if backend has no leave endpoint.
-
 const api = require('../../utils/api.js');
 
 Page({
@@ -44,86 +42,51 @@ Page({
     this.loadHistory();
   },
 
-  // ----------------- Quit join / leave a carpool -----------------
-  // Bound to <button bindtap="quitJoin" data-id="{{item.carpoolId}}">
-  quitJoin(e) {
-    const carpoolId = e.currentTarget.dataset.id || e.currentTarget.dataset.carpoolId;
-    if (!carpoolId) {
-      wx.showToast({ title: '行程ID缺失', icon: 'none' });
-      return;
-    }
+  _buildDisplayAddrFromItem(item, type = 'origin') {
+    const safe = v => (v === undefined || v === null) ? '' : String(v).trim();
+    if (!item) return '';
 
-    const app = getApp();
-    const userId = (app && app.globalData && app.globalData.userId) || wx.getStorageSync('userId') || null;
-    if (!userId) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
-      return;
-    }
-
-    wx.showModal({
-      title: '确认退出',
-      content: '确定要退出该行程吗？退出后你将不再显示为参与者。',
-      success: (res) => {
-        if (!res.confirm) return;
-
-        // optimistic UI: remove item from lists locally
-        const ongoing = (this.data.ongoingList || []).slice();
-        const finished = (this.data.finishedList || []).slice();
-
-        const removeById = (arr) => {
-          const idx = arr.findIndex(i => (i.carpoolId === carpoolId || i.carpool_id === carpoolId || i.id === carpoolId));
-          if (idx >= 0) {
-            arr.splice(idx, 1);
-            return true;
-          }
-          return false;
-        };
-
-        const removedFromOngoing = removeById(ongoing);
-        const removedFromFinished = !removedFromOngoing && removeById(finished);
-
-        this.setData({ ongoingList: ongoing, finishedList: finished });
-
-        try {
-          const key = 'recentJoinedCarpools';
-          const stored = wx.getStorageSync(key) || [];
-          if (Array.isArray(stored) && stored.length > 0) {
-            const filtered = stored.filter(f => {
-              const id = f && (f.carpoolId || f.carpool_id || f.id);
-              return id && String(id) !== String(carpoolId) ? true : false;
-            });
-            wx.setStorageSync(key, filtered);
-            console.log('recentJoinedCarpools removed id=', carpoolId);
-          }
-        } catch (e) {
-          console.warn('更新 recentJoinedCarpools 失败', e);
+    const pick = (cands) => {
+      for (const k of cands) {
+        if (item[k] !== undefined && item[k] !== null) {
+          const v = safe(item[k]);
+          if (v) return v;
         }
-
-        // call backend to actually leave
-        api.leaveCarpool({ carpoolId, userId }).then(resp => {
-          const ok = resp && (resp.code === 200 || resp.code === '200' || resp.success === true);
-          const localOnly = resp && resp.localOnly === true;
-          if (ok || localOnly) {
-
-            wx.showToast({ title: localOnly ? '已退出（本地）' : '已退出该行程', icon: 'success' });
-
-            setTimeout(() => this.loadHistory(), 600);
-          } else {
-            wx.showToast({ title: (resp && (resp.message || resp.msg)) ? (resp.message || resp.msg) : '退出失败，请重试', icon: 'none' });
-
-            setTimeout(() => this.loadHistory(), 600);
-          }
-        }).catch(err => {
-          console.error('leaveCarpool error:', err);
-
-          wx.showToast({ title: '退出失败，请重试', icon: 'none' });
-          setTimeout(() => this.loadHistory(), 600);
-        });
       }
-    });
+      return '';
+    };
+
+    // side-specific candidates
+    const cityCandidates = [ type, `${type}City`, `${type}_city`, `${type}Name`, `${type}_name` ];
+    const detailCandidates = [ `${type}Detail`, `${type}_detail`, `${type}District`, `${type}_district`, `${type}Area`, `${type}_area` ];
+
+    let city = pick(cityCandidates);
+    let district = pick(detailCandidates);
+
+    if (city && district) {
+      if (district.indexOf(city) === 0) return district;
+      return `${city}${district}`;
+    }
+    if (city) return city;
+    if (district) return district;
+
+    // combined field fallback
+    const combined = pick([`${type}Full`, `${type}_full`, `${type}Name`, `${type}_name`]);
+    if (combined) return combined;
+
+    // generic fallback (only as last resort)
+    const genericCity = pick(['city']);
+    const genericDetail = pick(['originDetail', 'origin_detail', 'destinationDetail', 'destination_detail', 'area', 'town', 'region']);
+    if (genericCity && genericDetail) {
+      if (genericDetail.indexOf(genericCity) === 0) return genericDetail;
+      return `${genericCity}${genericDetail}`;
+    }
+    if (genericCity) return genericCity;
+    if (genericDetail) return genericDetail;
+
+    return safe(item[type] || item.origin || item.destination || item.originDetail || item.destinationDetail || '');
   },
 
-  // ----------------- History / helpers -----------------
   _parseDepartureToMs(depRaw) {
     if (!depRaw) return NaN;
     try {
@@ -158,7 +121,7 @@ Page({
 
       console.log('加载历史记录并获取已加入列表，用户ID:', userId);
 
-
+      // prefer local recentJoinedCarpools (fast) to avoid noisy getJoined endpoints
       let localJoined = [];
       try {
         const fallback = wx.getStorageSync('recentJoinedCarpools') || [];
@@ -256,17 +219,25 @@ Page({
           if (uid && (item.userId === uid || item.user_id === uid)) relation = 'publisher';
           else if (relation !== 'publisher' && uid && participants.some(p => p && (p.userId === uid || p.user_id === uid))) relation = 'joined';
 
-          const displayOrigin = item.origin || item.originCity || item.origin_detail || item.originDetail || '';
-          const displayDestination = item.destination || item.destinationCity || item.destination_detail || item.destinationDetail || '';
+          // Build displayOrigin/displayDestination using the helper that combines city + detail
+          const displayOrigin = this._buildDisplayAddrFromItem(item, 'origin') || item.origin || item.originCity || item.origin_detail || item.originDetail || '';
+          const displayDestination = this._buildDisplayAddrFromItem(item, 'destination') || item.destination || item.destinationCity || item.destination_detail || item.destinationDetail || '';
           const displayDeparture = item.departureTime || item.departure_time || item.departure || '';
 
-          const depMs = this._parseDepartureToMs(item.departureTime || item.departure_time || item.departure);
+          // --- FIXED: Determine isFinished correctly ---
+          // If status indicates finished (status !== 1) then it must be finished regardless of departureTime.
+          // Otherwise, fall back to departureTime comparison.
+          const statusNum = Number(item.status || 0);
           let isFinished = false;
-          if (!isNaN(depMs)) {
-            isFinished = (depMs <= nowMs);
+          if (statusNum !== 1) {
+            isFinished = true;
           } else {
-            const statusNum = Number(item.status || 0);
-            isFinished = (statusNum !== 1);
+            const depMs = this._parseDepartureToMs(item.departureTime || item.departure_time || item.departure);
+            if (!isNaN(depMs)) {
+              isFinished = (depMs <= nowMs);
+            } else {
+              isFinished = false;
+            }
           }
 
           const mapped = Object.assign({}, item, {
@@ -277,6 +248,9 @@ Page({
             relation,
             isFinished
           });
+
+          // debug output to verify correct combination
+          console.debug('mine mapped:', mapped.carpoolId, mapped.displayOrigin, '→', mapped.displayDestination, ' finished=', mapped.isFinished);
 
           if (isFinished) finished.push(mapped);
           else ongoing.push(mapped);
@@ -301,6 +275,87 @@ Page({
       wx.showToast({ title: '加载失败', icon: 'none' });
       this.setData({ ongoingList: [], finishedList: [] });
     }
+  },
+
+  // ----------------- Quit join / leave a carpool -----------------
+  // Bound to <button bindtap="quitJoin" data-id="{{item.carpoolId}}">
+  quitJoin(e) {
+    const carpoolId = e.currentTarget.dataset.id || e.currentTarget.dataset.carpoolId;
+    if (!carpoolId) {
+      wx.showToast({ title: '行程ID缺失', icon: 'none' });
+      return;
+    }
+
+    const app = getApp();
+    const userId = (app && app.globalData && app.globalData.userId) || wx.getStorageSync('userId') || null;
+    if (!userId) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+
+    wx.showModal({
+      title: '确认退出',
+      content: '确定要退出该行程吗？退出后你将不再显示为参与者。',
+      success: (res) => {
+        if (!res.confirm) return;
+
+        // optimistic UI: remove item from lists locally
+        const ongoing = (this.data.ongoingList || []).slice();
+        const finished = (this.data.finishedList || []).slice();
+
+        const removeById = (arr) => {
+          const idx = arr.findIndex(i => (i.carpoolId === carpoolId || i.carpool_id === carpoolId || i.id === carpoolId));
+          if (idx >= 0) {
+            arr.splice(idx, 1);
+            return true;
+          }
+          return false;
+        };
+
+        const removedFromOngoing = removeById(ongoing);
+        const removedFromFinished = !removedFromOngoing && removeById(finished);
+
+        this.setData({ ongoingList: ongoing, finishedList: finished });
+
+        // remove from local recentJoinedCarpools if present
+        try {
+          const key = 'recentJoinedCarpools';
+          const stored = wx.getStorageSync(key) || [];
+          if (Array.isArray(stored) && stored.length > 0) {
+            const filtered = stored.filter(f => {
+              const id = f && (f.carpoolId || f.carpool_id || f.id);
+              return id && String(id) !== String(carpoolId) ? true : false;
+            });
+            wx.setStorageSync(key, filtered);
+            console.log('recentJoinedCarpools removed id=', carpoolId);
+          }
+        } catch (e) {
+          console.warn('更新 recentJoinedCarpools 失败', e);
+        }
+
+        // call backend to actually leave
+        api.leaveCarpool({ carpoolId, userId }).then(resp => {
+          // resp could be backend response object OR { success: true, localOnly: true } from our fallback
+          const ok = resp && (resp.code === 200 || resp.code === '200' || resp.success === true);
+          const localOnly = resp && resp.localOnly === true;
+          if (ok || localOnly) {
+            // success (either server-side or local-only fallback)
+            wx.showToast({ title: localOnly ? '已退出（本地）' : '已退出该行程', icon: 'success' });
+            // refresh to reflect server state
+            setTimeout(() => this.loadHistory(), 600);
+          } else {
+            wx.showToast({ title: (resp && (resp.message || resp.msg)) ? (resp.message || resp.msg) : '退出失败，请重试', icon: 'none' });
+            // revert by reloading from server/local
+            setTimeout(() => this.loadHistory(), 600);
+          }
+        }).catch(err => {
+          console.error('leaveCarpool error:', err);
+          wx.showToast({ title: '退出失败，请重试', icon: 'none' });
+          // revert UI
+          setTimeout(() => this.loadHistory(), 600);
+        });
+      }
+    });
   },
 
   // ----------------- UI Actions -----------------
