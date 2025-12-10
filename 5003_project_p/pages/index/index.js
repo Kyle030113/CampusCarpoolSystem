@@ -24,7 +24,6 @@ Page({
     this.loadCarpoolList();
   },
 
-
   _safe(val) {
     if (val === undefined || val === null) return '';
     return String(val).trim();
@@ -36,28 +35,96 @@ Page({
     return s.length > 16 ? s.substring(0, 16) : s;
   },
 
-  _mapItem(item) {
+
+  _buildAddrFromItem(item, side) {
     const safe = this._safe;
+    if (!item) return '';
+
+    // helper to pick first existing field from a list
+    const pick = (candidates) => {
+      for (const k of candidates) {
+        if (item[k] !== undefined && item[k] !== null) {
+          const v = safe(item[k]);
+          if (v) return v;
+        }
+      }
+      return '';
+    };
+
+    // side-specific candidate names (cover camelCase and snake_case)
+    const cityCandidates = [
+      side,
+      `${side}City`,
+      `${side}_city`,
+      `${side}Name`,
+      `${side}_name`
+    ];
+    const detailCandidates = [
+      `${side}Detail`,
+      `${side}_detail`,
+      `${side}District`,
+      `${side}_district`,
+      `${side}Area`,
+      `${side}_area`
+    ];
+
+    // pick side-specific values first
+    let city = pick(cityCandidates);
+    let district = pick(detailCandidates);
+
+    if (city && district) {
+      if (district.indexOf(city) === 0) return district;
+      return `${city}${district}`;
+    }
+    if (city) return city;
+    if (district) return district;
+
+    const altCity = pick([`${side}`, `${side}_city`, `${side}City`]);
+    if (altCity) return altCity;
+
+    const combined = pick([`${side}Full`, `${side}_full`, `${side}Name`, `${side}_name`]);
+    if (combined) return combined;
+
+    const genericCity = pick(['city', 'City']);
+    const genericDetail = pick(['originDetail', 'origin_detail', 'destinationDetail', 'destination_detail', 'area', 'town', 'region']);
+    if (genericCity && genericDetail) {
+      if (genericDetail.indexOf(genericCity) === 0) return genericDetail;
+      return `${genericCity}${genericDetail}`;
+    }
+    if (genericCity) return genericCity;
+    if (genericDetail) return genericDetail;
+
+    // final fallback: check exact side-named fields once more (lower chance)
+    return safe(item[side] || item[`${side}_name`] || item.origin || item.destination || '');
+  },
+
+  _mapItem(item) {
     const displayOrigin =
-      safe(item.origin) ||
-      safe(item.originCity) ||
-      safe(item.origin_detail) ||
-      safe(item.originDetail) ||
-      (safe(item.originCity) && safe(item.originDistrict) ? `${safe(item.originCity)} ${safe(item.originDistrict)}` : '') ||
+      this._buildAddrFromItem(item, 'origin') ||
+      this._buildAddrFromItem(item, 'from') ||
+      this._safe(item.origin) ||
+      this._safe(item.originCity) ||
+      this._safe(item.origin_detail) ||
+      this._safe(item.originDetail) ||
       '';
     const displayDestination =
-      safe(item.destination) ||
-      safe(item.destinationCity) ||
-      safe(item.destination_detail) ||
-      safe(item.destinationDetail) ||
-      (safe(item.destinationCity) && safe(item.destinationDistrict) ? `${safe(item.destinationCity)} ${safe(item.destinationDistrict)}` : '') ||
+      this._buildAddrFromItem(item, 'destination') ||
+      this._buildAddrFromItem(item, 'to') ||
+      this._safe(item.destination) ||
+      this._safe(item.destinationCity) ||
+      this._safe(item.destination_detail) ||
+      this._safe(item.destinationDetail) ||
       '';
     const displayDeparture = this._formatDeparture(item.departureTime || item.departure_time || item.departure || '');
     const statusNum = Number(item.status || 0);
     const isFinished = (statusNum !== 1);
-    return Object.assign({}, item, { displayOrigin, displayDestination, displayDeparture, statusNum, isFinished });
-  },
 
+    const mapped = Object.assign({}, item, { displayOrigin, displayDestination, displayDeparture, statusNum, isFinished });
+
+    console.debug('mapped display:', mapped.displayOrigin, '→', mapped.displayDestination, ' keys:', Object.keys(item || {}).slice(0, 40));
+
+    return mapped;
+  },
 
   loadCarpoolList(origin = '', destination = '') {
     console.log('loadCarpoolList -> origin:', origin, 'destination:', destination);
@@ -74,8 +141,7 @@ Page({
 
       let list = (res.content || []).map(item => this._mapItem(item));
       console.log('loaded list length:', list.length);
-      if (list.length > 0) console.log('first loaded item:', JSON.stringify(list[0], null, 2));
-
+      if (list.length > 0) console.log('first mapped item:', JSON.stringify(list[0], null, 2));
 
       const originFilter = this._safe(origin).toLowerCase();
       const destFilter = this._safe(destination).toLowerCase();
@@ -94,7 +160,6 @@ Page({
       this.setData({ carpoolList: [], filteredList: [] });
     });
   },
-
 
   showFilterPanel() {
     console.log('showFilterPanel -> start action-sheet based flow');
@@ -190,7 +255,6 @@ Page({
     return '';
   },
 
-
   resetFilter() {
     console.log('resetFilter called');
     this.setData({
@@ -202,7 +266,6 @@ Page({
     this.loadCarpoolList();
   },
 
-  // other UI
   goToPublish() {
     wx.navigateTo({ url: '/pages/publish/publish' });
   },
@@ -225,7 +288,6 @@ Page({
             if (ok) {
               wx.showToast({ title: '加入成功', icon: 'success' });
 
-
               try {
                 const key = 'recentJoinedCarpools';
                 const existing = wx.getStorageSync(key) || [];
@@ -236,7 +298,6 @@ Page({
                   destination: item.destination || item.destinationCity || item.displayDestination || '',
                   departureTime: item.departureTime || item.departure_time || item.departure || '',
                   participants: item.participants || [],
-
                   userId: item.userId || item.user_id || null,
                   publisherName: item.publisherName || item.userName || null,
                   relation: 'joined'
@@ -250,7 +311,6 @@ Page({
               } catch (e) {
                 console.warn('保存 recentJoinedCarpools 失败', e);
               }
-
 
               setTimeout(() => {
                 wx.switchTab({ url: '/pages/mine/mine' });
