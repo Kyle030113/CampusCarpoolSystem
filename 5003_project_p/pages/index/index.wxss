@@ -1,0 +1,319 @@
+/* pages/index/index.wxss */
+.container {
+  width: 100%;
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+}
+
+/* 筛选栏 */
+.filter-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 88rpx;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  border-radius: 40rpx;
+  background-color: #f5f5f5;
+}
+
+.filter-icon {
+  font-size: 28rpx;
+  margin-right: 8rpx;
+}
+
+.filter-text {
+  font-size: 28rpx;
+  color: #333333;
+}
+
+/* 拼车列表 */
+.carpool-list {
+  margin-top: 88rpx;
+  padding: 20rpx 30rpx;
+  height: calc(100vh - 88rpx);
+}
+
+.empty-tips {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.3;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999999;
+}
+
+/* 拼车卡片 */
+.carpool-card {
+  margin-bottom: 24rpx;
+}
+
+.route-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.location-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.location-icon {
+  font-size: 28rpx;
+  margin-right: 8rpx;
+}
+
+.location-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.arrow-icon {
+  font-size: 36rpx;
+  margin: 0 16rpx;
+  color: #1AAD19;
+  font-weight: bold;
+}
+
+.time-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.time-icon {
+  font-size: 24rpx;
+  margin-right: 8rpx;
+}
+
+.time-text {
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.publisher-info {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+  margin-bottom: 24rpx;
+}
+
+.avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  margin-right: 16rpx;
+  background: linear-gradient(135deg, #1AAD19, #13ce66);
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.publisher-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.publisher-name {
+  font-size: 28rpx;
+  color: #333333;
+  margin-bottom: 8rpx;
+}
+
+.publish-time {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.action-btns {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-join {
+  width: 180rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  background-color: #1AAD19;
+  color: #ffffff;
+  border-radius: 32rpx;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.btn-join::after {
+  border: none;
+}
+
+/* 发布按钮 */
+.publish-btn {
+  position: fixed;
+  right: 40rpx;
+  bottom: 140rpx;
+  width: 112rpx;
+  height: 112rpx;
+  background-color: #1AAD19;
+  border-radius: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 16rpx rgba(26, 173, 25, 0.3);
+  z-index: 99;
+}
+
+.publish-icon {
+  font-size: 56rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+/* 筛选面板 */
+.filter-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 999;
+}
+
+.filter-panel.show {
+  display: block;
+}
+
+.filter-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 560rpx;
+  height: 100vh;
+  background-color: #ffffff;
+  padding: 40rpx 30rpx;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.filter-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.filter-reset {
+  font-size: 28rpx;
+  color: #1AAD19;
+}
+
+.filter-item {
+  margin-bottom: 40rpx;
+}
+
+.filter-label {
+  display: block;
+  font-size: 28rpx;
+  color: #666666;
+  margin-bottom: 16rpx;
+}
+
+.filter-select {
+  height: 80rpx;
+  line-height: 80rpx;
+  padding: 0 24rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+}
+
+.filter-select .placeholder {
+  color: #999999;
+  font-size: 28rpx;
+}
+
+.filter-select .selected {
+  color: #333333;
+  font-size: 28rpx;
+}
+
+.filter-confirm {
+  margin-top: 60rpx;
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+}
+
+/* 选择器 */
+.picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+.picker-modal.show {
+  display: flex;
+}
+
+.picker-content {
+  width: 100%;
+  max-height: 60vh;
+  background-color: #ffffff;
+  border-radius: 24rpx 24rpx 0 0;
+}
+
+.picker-list {
+  height: 60vh;
+  padding: 20rpx 0;
+}
+
+.picker-item {
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 40rpx;
+  font-size: 32rpx;
+  color: #333333;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.picker-item:active {
+  background-color: #f5f5f5;
+}

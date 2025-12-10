@@ -1,0 +1,36 @@
+<!-- pages/detail/detail.wxml -->
+<view class="page-detail" style="padding:16px;background:#fff;min-height:100%;">
+  <view style="font-weight:700;font-size:18px;margin-bottom:8px;">行程详情</view>
+
+  <view style="margin-bottom:10px;">
+    <text style="color:#e53935;font-weight:700;">{{item.displayOrigin || item.origin}}</text>
+    <text> → </text>
+    <text style="color:#2e7d32;font-weight:700;">{{item.displayDestination || item.destination}}</text>
+  </view>
+
+  <view style="margin-bottom:8px;color:#666;">
+    <text>出发时间：{{item.displayDeparture || item.departureTime || item.departure}}</text>
+  </view>
+
+  <view style="margin-bottom:8px;">
+    <text>发布者：{{item.publisherName || item.userId || item.user_id || '未知'}}</text>
+  </view>
+
+  <view style="margin-bottom:8px;">
+    <text>备注：{{item.remarks || item.remark || '无'}}</text>
+  </view>
+
+  <view style="margin-top:12px;">
+    <text style="font-weight:700;">参与者 ({{participantCount}})</text>
+    <block wx:for="{{participants}}" wx:key="userId" wx:for-item="p">
+      <view style="padding:8px 0;border-bottom:1px solid #f0f0f0;">
+        <text>{{p.wechatNickname || p.nickName || p.userId || '--'}}</text>
+      </view>
+    </block>
+    <view wx:if="{{participants.length === 0}}" style="padding:8px 0;color:#999;">暂无参与者</view>
+  </view>
+
+  <view style="margin-top:20px;">
+    <button bindtap="onClose" style="background:#1aad19;color:#fff;padding:8px 12px;border-radius:6px;">关闭</button>
+  </view>
+</view>

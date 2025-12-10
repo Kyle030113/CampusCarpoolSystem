@@ -1,0 +1,61 @@
+/* pages/mine/mine.wxss */
+.container {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f8f8f8;
+    padding-bottom: 200rpx;
+  }
+  
+  /* ... 其他样式保持不变 ... */
+  
+  /* 底部操作区 */
+  .bottom-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border-top: 1rpx solid #f0f0f0;
+    padding: 20rpx 30rpx;
+  }
+  
+  /* 调试区域 */
+  .debug-section {
+    display: flex;
+    gap: 20rpx;
+    margin-bottom: 20rpx;
+  }
+  
+  .btn-debug {
+    flex: 1;
+    height: 64rpx;
+    line-height: 64rpx;
+    background-color: #f0f0f0;
+    color: #666666;
+    border-radius: 8rpx;
+    font-size: 26rpx;
+    padding: 0;
+  }
+  
+  .btn-debug::after {
+    border: none;
+  }
+  
+  .btn-logout {
+    width: 100%;
+    height: 88rpx;
+    line-height: 88rpx;
+    background-color: #ffffff;
+    color: #ff6b6b;
+    border: 1rpx solid #ff6b6b;
+    border-radius: 8rpx;
+    font-size: 32rpx;
+    padding: 0;
+  }
+  
+  .btn-logout::after {
+    border: none;
+  }
+  
+  /* 其他样式与之前相同 */
+  /* ... */

@@ -1,0 +1,81 @@
+<!-- pages/publish/publish.wxml -->
+<view class="page" style="padding:12px;background:#fff;min-height:100%;">
+
+<view style="font-weight:700;font-size:18px;color:#1aad19;margin-bottom:12px;">发布行程</view>
+
+<!-- 出发地：城市选择 + 区县选择（区县在选了城市后显示） -->
+<view style="margin-bottom:12px;">
+  <text style="display:block;margin-bottom:6px;">出发地</text>
+  <view style="display:flex;gap:8px;align-items:center;">
+    <picker mode="selector" range="{{citiesDisplay}}" value="{{originCityIndex}}" bindchange="onOriginCityChange">
+      <view style="flex:1;padding:10px;border:1px solid #eaeaea;border-radius:6px;">
+        <text>{{ originCity || '选择城市' }}</text>
+      </view>
+    </picker>
+
+    <picker wx:if="{{originDistricts.length>0}}" mode="selector" range="{{originDistricts}}" value="{{originDistrictIndex}}" bindchange="onOriginDistrictChange">
+      <view style="flex:1;padding:10px;border:1px solid #eaeaea;border-radius:6px;">
+        <text>{{ originDistrict || '选择区/县' }}</text>
+      </view>
+    </picker>
+  </view>
+</view>
+
+<!-- 目的地：城市选择 + 区县选择 -->
+<view style="margin-bottom:12px;">
+  <text style="display:block;margin-bottom:6px;">目的地</text>
+  <view style="display:flex;gap:8px;align-items:center;">
+    <picker mode="selector" range="{{citiesDisplay}}" value="{{destinationCityIndex}}" bindchange="onDestinationCityChange">
+      <view style="flex:1;padding:10px;border:1px solid #eaeaea;border-radius:6px;">
+        <text>{{ destinationCity || '选择城市' }}</text>
+      </view>
+    </picker>
+
+    <picker wx:if="{{destinationDistricts.length>0}}" mode="selector" range="{{destinationDistricts}}" value="{{destinationDistrictIndex}}" bindchange="onDestinationDistrictChange">
+      <view style="flex:1;padding:10px;border:1px solid #eaeaea;border-radius:6px;">
+        <text>{{ destinationDistrict || '选择区/县' }}</text>
+      </view>
+    </picker>
+  </view>
+</view>
+
+<!-- 出发日期 + 出发时间（两个 wheel pickers，组合为完整时间） -->
+<view style="margin-bottom:12px;">
+  <text style="display:block;margin-bottom:6px;">出发时间</text>
+  <view style="display:flex;gap:8px;align-items:center;">
+    <picker mode="date" value="{{departureDate}}" bindchange="onDepartureDateChange">
+      <view style="flex:1;padding:10px;border:1px solid #eaeaea;border-radius:6px;">
+        <text>{{ departureDate || '选择日期' }}</text>
+      </view>
+    </picker>
+    <picker mode="time" value="{{departureTime}}" bindchange="onDepartureTimeChange">
+      <view style="flex:1;padding:10px;border:1px solid #eaeaea;border-radius:6px;">
+        <text>{{ departureTime || '选择时间' }}</text>
+      </view>
+    </picker>
+  </view>
+
+  <view style="color:#999;font-size:12px;margin-top:8px;">
+    <text wx:if="{{departureDate && departureTime}}">已选：{{departureDate}} {{departureTime}}</text>
+    <text wx:else>请选择日期和时间</text>
+  </view>
+</view>
+
+<!-- 备注 -->
+<view style="margin-bottom:16px;">
+  <text style="display:block;margin-bottom:6px;">备注（选填）</text>
+  <textarea
+    placeholder="填写行程备注，例如可携带人数、车牌、联系人等（最多300字）"
+    value="{{remarks}}"
+    bindinput="onRemarksInput"
+    maxlength="300"
+    autoHeight="true"
+    style="min-height:84px;padding:8px;border:1px solid #eaeaea;border-radius:6px;"></textarea>
+  <view style="text-align:right;color:#999;font-size:12px;margin-top:6px;">{{remarks.length}} / 300</view>
+</view>
+
+<!-- 发布按钮 -->
+<view style="margin-bottom:18px;">
+  <button bindtap="publish" style="background:#1aad19;color:#fff;padding:10px 18px;border-radius:8px;">发布行程</button>
+</view>
+</view>
